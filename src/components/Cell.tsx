@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useRef } from 'react';
 import { Cell as CellType, CellState } from '../types';
 
 interface CellProps {
@@ -9,7 +9,40 @@ interface CellProps {
 }
 
 const Cell: React.FC<CellProps> = ({ cell, onClick, onRightClick, onChord }) => {
+  const longPressTimeout = useRef<number>();
+  const touchStartTime = useRef<number>(0);
   const { state, adjacentMines } = cell;
+
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    touchStartTime.current = Date.now();
+    longPressTimeout.current = setTimeout(() => {
+      onRightClick(e as unknown as React.MouseEvent);
+    }, 500); // 500ms for long press
+  }, [onRightClick]);
+
+  const handleTouchEnd = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    if (longPressTimeout.current) {
+      clearTimeout(longPressTimeout.current);
+    }
+    
+    const touchDuration = Date.now() - touchStartTime.current;
+    if (touchDuration < 500) {
+      if (state === CellState.REVEALED && adjacentMines > 0) {
+        onChord(e as unknown as React.MouseEvent);
+      } else {
+        onClick();
+      }
+    }
+  }, [onClick, onChord, state, adjacentMines]);
+
+  const handleTouchMove = useCallback((e: React.TouchEvent) => {
+    e.preventDefault();
+    if (longPressTimeout.current) {
+      clearTimeout(longPressTimeout.current);
+    }
+  }, []);
 
   // Generate cell class based on state
   const getCellClass = () => {
@@ -106,6 +139,9 @@ const Cell: React.FC<CellProps> = ({ cell, onClick, onRightClick, onChord }) => 
       onContextMenu={onRightClick}
       onMouseDown={handleMouseDown}
       onAuxClick={onChord} // for middle click
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchMove={handleTouchMove}
     >
       {renderContent()}
     </div>
