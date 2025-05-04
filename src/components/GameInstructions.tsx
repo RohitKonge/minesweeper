@@ -36,11 +36,22 @@ const GameInstructions: React.FC = () => {
               </p>
               
               <div>
-                <h3 className="font-semibold">Controls:</h3>
+                <h3 className="font-semibold">Desktop Controls:</h3>
                 <ul className="list-disc ml-5 mt-2">
-                  <li><strong>Left Click</strong>: Reveal a cell</li>
-                  <li><strong>Right Click</strong>: Flag a suspected mine or add a question mark</li>
-                  <li><strong>Middle Click</strong> (or <strong>Left+Right Click</strong>): Reveal adjacent cells when the correct number of flags are placed</li>
+                  <li>Left-click an empty square to reveal it</li>
+                  <li>Right-click (or Ctrl+click) an empty square to flag it</li>
+                  <li>Middle-click (or left+right click) a number to reveal its adjacent squares</li>
+                  <li>Press space bar while hovering over a square to flag it or reveal its adjacent squares</li>
+                  <li>Press F2 or click the smiley face to start a new game</li>
+                </ul>
+              </div>
+
+              <div className="mt-4">
+                <h3 className="font-semibold">Mobile Controls:</h3>
+                <ul className="list-disc ml-5 mt-2">
+                  <li>Tap an empty square to reveal it</li>
+                  <li>Long-press an empty square to flag it</li>
+                  <li>Tap a number to reveal its adjacent squares</li>
                 </ul>
               </div>
               
