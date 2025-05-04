@@ -25,6 +25,7 @@ const DifficultySelector: React.FC = () => {
   });
   const [newPresetName, setNewPresetName] = useState('');
   const [showPresetSave, setShowPresetSave] = useState(false);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   // Save presets to localStorage
   useEffect(() => {
@@ -43,11 +44,29 @@ const DifficultySelector: React.FC = () => {
     return ((mines / (rows * cols)) * 100).toFixed(1);
   };
 
+  const validateSettings = () => {
+    if (customSettings.rows < 8 || customSettings.rows > 50) {
+      return 'Height must be between 8 and 50';
+    }
+    if (customSettings.cols < 8 || customSettings.cols > 50) {
+      return 'Width must be between 8 and 50';
+    }
+    const maxMines = (customSettings.rows * customSettings.cols) - 9;
+    if (customSettings.mines < 10 || customSettings.mines > maxMines) {
+      return `Mines must be between 10 and ${maxMines}`;
+    }
+    return null;
+  };
+
   const handleCustomSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const maxMines = (customSettings.rows * customSettings.cols) - 9;
-    const mines = Math.min(customSettings.mines, maxMines);
-    startCustomGame(customSettings.rows, customSettings.cols, mines);
+    const error = validateSettings();
+    if (error) {
+      setValidationError(error);
+      return;
+    }
+    setValidationError(null);
+    startCustomGame(customSettings.rows, customSettings.cols, customSettings.mines);
     setShowCustomModal(false);
   };
 
@@ -80,6 +99,51 @@ const DifficultySelector: React.FC = () => {
     return isActive
       ? `${baseClass} bg-blue-600 text-white font-medium`
       : `${baseClass} bg-gray-300 hover:bg-gray-400 text-gray-800`;
+  };
+
+  const handleWidthChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.value === '') {
+      setCustomSettings(prev => ({
+        ...prev,
+        cols: 0
+      }));
+      return;
+    }
+    const cols = parseInt(e.target.value) || 0;
+    setCustomSettings(prev => ({
+      ...prev,
+      cols
+    }));
+  };
+
+  const handleHeightChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.value === '') {
+      setCustomSettings(prev => ({
+        ...prev,
+        rows: 0
+      }));
+      return;
+    }
+    const rows = parseInt(e.target.value) || 0;
+    setCustomSettings(prev => ({
+      ...prev,
+      rows
+    }));
+  };
+
+  const handleMinesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.value === '') {
+      setCustomSettings(prev => ({
+        ...prev,
+        mines: 0
+      }));
+      return;
+    }
+    const mines = parseInt(e.target.value) || 0;
+    setCustomSettings(prev => ({
+      ...prev,
+      mines
+    }));
   };
 
   return (
@@ -118,69 +182,57 @@ const DifficultySelector: React.FC = () => {
             <h2 className="text-xl font-bold mb-4">Custom Game</h2>
             <form onSubmit={handleCustomSubmit}>
               <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">
-                      Height (8-50)
-                    </label>
-                    <input
-                      type="number"
-                      min="8"
-                      max="50"
-                      value={customSettings.rows}
-                      onChange={(e) => setCustomSettings(prev => {
-                        const rows = Math.min(50, Math.max(8, parseInt(e.target.value) || 8));
-                        const maxMines = (rows * prev.cols) - 9;
-                        return {
-                          ...prev,
-                          rows,
-                          mines: Math.min(prev.mines, maxMines)
-                        };
-                      })}
-                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                    />
+                {validationError && (
+                  <div className="p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                    {validationError}
                   </div>
-                  <div>
+                )}
+                <div className="flex gap-4">
+                  <div className="flex-1">
                     <label className="block text-sm font-medium text-gray-700">
-                      Width (8-50)
+                      Width
                     </label>
                     <input
                       type="number"
-                      min="8"
-                      max="50"
                       value={customSettings.cols}
-                      onChange={(e) => setCustomSettings(prev => {
-                        const cols = Math.min(50, Math.max(8, parseInt(e.target.value) || 8));
-                        const maxMines = (prev.rows * cols) - 9;
-                        return {
-                          ...prev,
-                          cols,
-                          mines: Math.min(prev.mines, maxMines)
-                        };
-                      })}
+                      onChange={handleWidthChange}
                       className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
                     />
+                    <div className="mt-1 text-xs text-gray-500">
+                      Range: 8-50
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Height
+                    </label>
+                    <input
+                      type="number"
+                      value={customSettings.rows}
+                      onChange={handleHeightChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                    <div className="mt-1 text-xs text-gray-500">
+                      Range: 8-50
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-sm font-medium text-gray-700">
+                      Mines
+                    </label>
+                    <input
+                      type="number"
+                      value={customSettings.mines}
+                      onChange={handleMinesChange}
+                      className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    />
+                    <div className="mt-1 text-xs text-gray-500">
+                      Range: 10-{(customSettings.rows * customSettings.cols) - 9}
+                    </div>
                   </div>
                 </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">
-                    Mines (10-{(customSettings.rows * customSettings.cols) - 9})
-                  </label>
-                  <input
-                    type="number"
-                    min="10"
-                    max={(customSettings.rows * customSettings.cols) - 9}
-                    value={customSettings.mines}
-                    onChange={(e) => setCustomSettings(prev => ({
-                      ...prev,
-                      mines: Math.min((prev.rows * prev.cols) - 9, Math.max(10, parseInt(e.target.value) || 10))
-                    }))}
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                  />
-                  <div className="mt-1 text-sm text-gray-500">
-                    Mine Density: {calculateDensity(customSettings.rows, customSettings.cols, customSettings.mines)}%
-                  </div>
+                <div className="text-sm text-gray-500">
+                  Mine Density: {calculateDensity(customSettings.rows, customSettings.cols, customSettings.mines)}%
                 </div>
 
                 {presets.length > 0 && (
